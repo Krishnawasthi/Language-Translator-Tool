@@ -360,5 +360,614 @@ If you plan to distribute or modify the project publicly, consider adding an app
 
 https://api.mymemory.translated.net/get?q={text}&langpair={translateFrom}|{translateTo}
 
+# ⚙️ Language Translator — Technical Documentation
+
+This document explains the **technical implementation and internal working** of the Language Translator Chrome Extension.
+
+The project is built using **HTML, CSS, and JavaScript** and uses the **MyMemory Translation API** to provide real-time language translation.
+
+---
+
+## 🏗️ Application Architecture
+
+The extension follows a simple client-side architecture:
+
+```text
+                    Chrome Extension
+                           │
+                           ▼
+                    ┌─────────────┐
+                    │  pop.html   │
+                    │ UI / Layout  │
+                    └──────┬──────┘
+                           │
+                           ▼
+                    ┌─────────────┐
+                    │   pop.css   │
+                    │   Styling   │
+                    └──────┬──────┘
+                           │
+                           ▼
+                    ┌─────────────┐
+                    │   pop.js    │
+                    │ Application │
+                    │    Logic    │
+                    └──────┬──────┘
+                           │
+              ┌────────────┼────────────┐
+              ▼            ▼            ▼
+        Translation     Clipboard    Speech API
+            API             API           API
+              │
+              ▼
+        MyMemory API
+```
+
+---
+
+# 📂 Core Components
+
+## 1. `pop.html`
+
+The HTML file provides the structure of the extension popup.
+
+It contains the interface elements required for:
+
+* Source text input
+* Translation output
+* Source language selection
+* Target language selection
+* Translation button
+* Language swap button
+* Copy controls
+* Text-to-speech controls
+
+The HTML acts as the presentation layer of the extension.
+
+---
+
+## 2. `pop.css`
+
+The CSS file controls the appearance of the popup.
+
+It is responsible for:
+
+* Layout
+* Spacing
+* Typography
+* Buttons
+* Input fields
+* Icons
+* Translation sections
+* Overall visual presentation
+
+Separating CSS from JavaScript keeps the application structure clean and maintainable.
+
+---
+
+# 🧠 JavaScript Implementation
+
+The main application logic is implemented inside:
+
+```text
+pop.js
+```
+
+The JavaScript handles:
+
+* DOM selection
+* Language population
+* Translation requests
+* Language swapping
+* Clipboard operations
+* Text-to-speech
+* User interactions
+
+---
+
+# 🌍 Language Selection
+
+The extension loads language options from:
+
+```text
+countries.js
+```
+
+The language mapping contains language codes and their corresponding names.
+
+JavaScript loops through the available language entries and dynamically creates `<option>` elements for the language dropdowns.
+
+Conceptually:
+
+```text
+countries.js
+     ↓
+Read language codes
+     ↓
+Loop through languages
+     ↓
+Create <option>
+     ↓
+Add options to dropdown
+```
+
+The default languages are configured as:
+
+```text
+English → Hindi
+```
+
+---
+
+# 🔄 Language Swapping
+
+The swap functionality allows users to reverse the translation direction.
+
+When the swap button is clicked:
+
+```text
+Source Text
+     ↕
+Translated Text
+```
+
+and:
+
+```text
+Source Language
+     ↕
+Target Language
+```
+
+are exchanged.
+
+This allows users to quickly switch between:
+
+```text
+English → Hindi
+```
+
+and:
+
+```text
+Hindi → English
+```
+
+without manually selecting the languages again.
+
+---
+
+# 🔌 Translation API
+
+The extension uses the **MyMemory Translated API**.
+
+The API request is constructed dynamically using:
+
+* Input text
+* Source language
+* Target language
+
+The general request format is:
+
+```text
+https://api.mymemory.translated.net/get?q={text}&langpair={source}|{target}
+```
+
+For example:
+
+```text
+https://api.mymemory.translated.net/get?q=Hello&langpair=en-GB|hi-IN
+```
+
+---
+
+# 🔁 Translation Request Flow
+
+When the user clicks the Translate button:
+
+```text
+User enters text
+       ↓
+Read input value
+       ↓
+Read source language
+       ↓
+Read target language
+       ↓
+Build API URL
+       ↓
+Send fetch() request
+       ↓
+Receive JSON response
+       ↓
+Read translated text
+       ↓
+Display result
+```
+
+The request is performed using JavaScript's `fetch()` API.
+
+Conceptually:
+
+```javascript
+fetch(apiUrl)
+    .then(response => response.json())
+    .then(data => {
+        // Display translation
+    });
+```
+
+---
+
+# 📦 API Response Handling
+
+The API returns a JSON response containing translation information.
+
+The extension reads the translated result from the response and places it into the output text field.
+
+The output field initially displays:
+
+```text
+Translating...
+```
+
+while the request is being processed.
+
+After receiving the response, the translated text replaces the placeholder.
+
+---
+
+# 📋 Clipboard API
+
+The extension provides copy functionality using the browser's Clipboard API.
+
+The user can copy:
+
+```text
+Original Text
+```
+
+or:
+
+```text
+Translated Text
+```
+
+The core operation is based on:
+
+```javascript
+navigator.clipboard.writeText(text);
+```
+
+This allows users to quickly reuse translations elsewhere.
+
+---
+
+# 🔊 Speech Synthesis API
+
+The extension also supports text-to-speech functionality.
+
+It uses:
+
+```javascript
+SpeechSynthesisUtterance
+```
+
+to create a speech request.
+
+The process is:
+
+```text
+User clicks speaker icon
+        ↓
+Read text
+        ↓
+Read selected language
+        ↓
+Create SpeechSynthesisUtterance
+        ↓
+Set language
+        ↓
+speechSynthesis.speak()
+```
+
+This allows users to listen to the pronunciation of both source and translated text.
+
+---
+
+# ⌨️ User Input Handling
+
+The extension monitors the source text field.
+
+When the user removes all source text, the translated field is also cleared.
+
+This prevents an old translation from remaining visible when there is no source text.
+
+---
+
+# 🧩 DOM Manipulation
+
+The JavaScript uses DOM selectors to access interface elements.
+
+Examples include:
+
+```javascript
+document.querySelector()
+```
+
+and:
+
+```javascript
+document.querySelectorAll()
+```
+
+These are used to access:
+
+* Text fields
+* Language selectors
+* Buttons
+* Icons
+* Swap control
+
+Event listeners are then attached to these elements.
+
+---
+
+# ⚡ Event-Driven Architecture
+
+The application is primarily event-driven.
+
+Important events include:
+
+### Translate Button
+
+```text
+click
+ ↓
+Validate input
+ ↓
+Call translation API
+ ↓
+Display result
+```
+
+### Swap Button
+
+```text
+click
+ ↓
+Exchange languages
+ ↓
+Exchange text
+```
+
+### Copy Icon
+
+```text
+click
+ ↓
+Read text
+ ↓
+Clipboard API
+ ↓
+Copy text
+```
+
+### Speaker Icon
+
+```text
+click
+ ↓
+Read text
+ ↓
+Create speech utterance
+ ↓
+Speak
+```
+
+### Input Field
+
+```text
+keyup
+ ↓
+Check input
+ ↓
+Clear output if empty
+```
+
+---
+
+# 🔐 Chrome Extension Configuration
+
+The extension uses **Manifest V3**.
+
+The manifest defines the extension's:
+
+* Name
+* Version
+* Description
+* Popup
+* Icons
+* Permissions
+
+The project uses permissions including:
+
+```json
+{
+    "permissions": [
+        "activeTab",
+        "storage"
+    ]
+}
+```
+
+---
+
+# 🗂️ Data Flow
+
+The complete data flow can be represented as:
+
+```text
+                 User Input
+                     │
+                     ▼
+              Language Select
+                     │
+                     ▼
+                JavaScript
+                     │
+                     ▼
+              Build API URL
+                     │
+                     ▼
+             MyMemory API
+                     │
+                     ▼
+                JSON Data
+                     │
+                     ▼
+             Extract Result
+                     │
+                     ▼
+             Output Text Field
+```
+
+---
+
+# 🔗 Browser APIs Used
+
+The project demonstrates several browser APIs.
+
+| API                      | Purpose                          |
+| ------------------------ | -------------------------------- |
+| **Fetch API**            | Sends translation requests       |
+| **Clipboard API**        | Copies text                      |
+| **Web Speech API**       | Reads text aloud                 |
+| **Chrome Extension API** | Provides extension functionality |
+| **DOM API**              | Handles interface elements       |
+
+---
+
+# 🧪 Error Handling
+
+The current implementation performs basic input validation.
+
+If the source field is empty:
+
+```text
+Translation request is not sent.
+```
+
+For production-level usage, the application could be improved with additional handling for:
+
+* Network errors
+* API failures
+* Invalid responses
+* API rate limits
+* Unsupported languages
+* Browser permission issues
+
+---
+
+# 🚀 Possible Technical Improvements
+
+Future development could introduce:
+
+### 1. Async/Await
+
+Replace promise chains with cleaner asynchronous code:
+
+```javascript
+const response = await fetch(apiUrl);
+const data = await response.json();
+```
+
+### 2. Better Error Handling
+
+```text
+try
+   ↓
+API Request
+   ↓
+Success
+   ↓
+Display Translation
+
+catch
+   ↓
+Display Error Message
+```
+
+### 3. Automatic Language Detection
+
+Detect the source language automatically instead of requiring the user to select it.
+
+### 4. Translation History
+
+Store previous translations using Chrome Storage:
+
+```text
+Chrome Storage
+      ↓
+Translation History
+      ↓
+Previous Translations
+```
+
+### 5. Debounced Translation
+
+Reduce unnecessary API requests by waiting until the user pauses typing.
+
+### 6. Improved Accessibility
+
+Add:
+
+* ARIA labels
+* Keyboard navigation
+* Better focus management
+* Screen-reader support
+
+---
+
+# 🎯 Learning Outcomes
+
+This project demonstrates practical implementation of:
+
+* JavaScript DOM manipulation
+* Event listeners
+* REST API integration
+* Fetch API
+* JSON response handling
+* Chrome Extension Manifest V3
+* Browser permissions
+* Clipboard API
+* Web Speech API
+* Dynamic HTML generation
+* Client-side application architecture
+
+---
+
+# 📌 Project Summary
+
+The Language Translator Extension is a practical example of how **HTML, CSS, JavaScript, browser APIs, and an external REST API** can be combined to create a useful Chrome Extension.
+
+The project keeps the architecture lightweight while demonstrating several important concepts in modern frontend and browser-extension development.
+
+---
+
+## 👨‍💻 Author
+
+**Krishna Mohan Awasthi**
+
+GitHub: [Krishnawasthi](https://github.com/Krishnawasthi)
+
+---
+
+## 📄 License
+
+This project is created for **learning and development purposes**.
+
+If you plan to distribute or modify the project publicly, consider adding an appropriate open-source license.
+
 
 
